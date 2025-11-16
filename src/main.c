@@ -64,29 +64,37 @@ _interrupt( 2 ) void prc_frame_copy_irq(void)
   IRQ_ACT1 = IRQ1_PRC_COMPLETE;
 }
 
+void clear_canvas( void ) {
+  memset( 0x1000, 0, 96 * 8 );
+}
+
 void drawMenu( uint8_t p ) {
   uint8_t i = indOffset;
   
   // Empty screen.
-  memset( 0x1000, 0, 96 * 8 );
+  clear_canvas();
 
   print( 10, 0, "PM2040 X-in-1" );
-  for ( ;; ) {
-    print( LABELX, i, menuTitles[ i - indOffset + p * SLOTSPERPAGE ] );
-    ++i;
-    
-    if ( p == PAGES - 1 ) {
-      if ( i >= LASTPAGESLOTS + indOffset ) {
-        break;
-      }
-    } else {
-      if ( i >= SLOTSPERPAGE + indOffset ) {
-        break;
-      }
-    }
-  }
 
-  printDigit( PAGEX, PAGEY, p );
+  print( LABELX, indOffset, "Scan" );
+  print( LABELX, indOffset + 1, "Select" );
+  print( LABELX, indOffset + 2, "Attack" );
+  // for ( ;; ) {
+  //   print( LABELX, , menuTitles[ i - indOffset + p * SLOTSPERPAGE ] );
+  //   ++i;
+    
+  //   if ( p == PAGES - 1 ) {
+  //     if ( i >= LASTPAGESLOTS + indOffset ) {
+  //       break;
+  //     }
+  //   } else {
+  //     if ( i >= SLOTSPERPAGE + indOffset ) {
+  //       break;
+  //     }
+  //   }
+  // }
+
+  // printDigit( PAGEX, PAGEY, p );
 } 
 
 int main(void)
