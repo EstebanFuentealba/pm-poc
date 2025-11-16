@@ -1,0 +1,22 @@
+# Archivos de compilación
+build/
+*.min
+*.hex
+*.obj
+*.src
+*.lst
+*.map
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+*.map
+*.sre
