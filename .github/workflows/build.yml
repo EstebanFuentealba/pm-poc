@@ -24,9 +24,10 @@ jobs:
         sudo apt-get install -y git curl wget unzip srecord wine wine32 wine64 make
     
     - name: Setup Wine
+      env:
+        WINEARCH: win32
+        WINEPREFIX: ${{ runner.temp }}/.wine
       run: |
-        export WINEARCH=win32
-        export WINEPREFIX=$HOME/.wine
         wineboot --init
         while pgrep wineserver > /dev/null; do sleep 1; done
     
@@ -41,19 +42,21 @@ jobs:
     
     - name: Install c88-pokemini toolchain
       if: steps.cache-c88.outputs.cache-hit != 'true'
+      env:
+        WINEARCH: win32
+        WINEPREFIX: ${{ runner.temp }}/.wine
       run: |
         cd ~
         git clone https://github.com/pokemon-mini/c88-pokemini.git
         cd c88-pokemini
         chmod +x install.sh installers/*.sh
-        export WINEARCH=win32
-        export WINEPREFIX=$HOME/.wine
         ./install.sh
     
     - name: Compile Pokemon Mini ROM
+      env:
+        WINEARCH: win32
+        WINEPREFIX: ${{ runner.temp }}/.wine
       run: |
-        export WINEARCH=win32
-        export WINEPREFIX=$HOME/.wine
         export PATH="$HOME/c88-pokemini/c88tools/bin:$PATH"
         make
     
