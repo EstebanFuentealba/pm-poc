@@ -17,20 +17,45 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Build Docker image
+    - name: Install dependencies
       run: |
-        docker build --platform linux/amd64 -t pm-compiler .
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y git curl wget unzip srecord wine wine32 wine64 make
+    
+    - name: Setup Wine
+      run: |
+        export WINEARCH=win32
+        export WINEPREFIX=$HOME/.wine
+        wineboot --init
+        while pgrep wineserver > /dev/null; do sleep 1; done
+    
+    - name: Cache c88-pokemini
+      uses: actions/cache@v3
+      id: cache-c88
+      with:
+        path: ~/c88-pokemini
+        key: c88-pokemini-${{ hashFiles('**/Makefile') }}
+        restore-keys: |
+          c88-pokemini-
+    
+    - name: Install c88-pokemini toolchain
+      if: steps.cache-c88.outputs.cache-hit != 'true'
+      run: |
+        cd ~
+        git clone https://github.com/pokemon-mini/c88-pokemini.git
+        cd c88-pokemini
+        chmod +x install.sh installers/*.sh
+        export WINEARCH=win32
+        export WINEPREFIX=$HOME/.wine
+        ./install.sh
     
     - name: Compile Pokemon Mini ROM
       run: |
-        docker run --rm \
-          -v $(pwd):/project \
-          -e WINEARCH=win32 \
-          -e WINEPREFIX=/opt/c88-pokemini/wineprefix \
-          pm-compiler make
+        export WINEARCH=win32
+        export WINEPREFIX=$HOME/.wine
+        export PATH="$HOME/c88-pokemini/c88tools/bin:$PATH"
+        make
     
     - name: List generated files
       run: |
@@ -52,10 +77,10 @@ jobs:
           helloworld.map
         if-no-files-found: error
     
-    - name: Upload web files for GitHub Pages
+    - name: Upload web files for deployment
       uses: actions/upload-artifact@v4
       with:
-        name: github-pages
+        name: web-files
         path: web/
     
     - name: Create Release
@@ -107,7 +132,7 @@ jobs:
     - name: Download web artifacts
       uses: actions/download-artifact@v4
       with:
-        name: github-pages
+        name: web-files
         path: ./web
     
     - name: Setup Pages
