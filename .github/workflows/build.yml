@@ -1,0 +1,124 @@
+name: Build Pokemon Mini ROM
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build --platform linux/amd64 -t pm-compiler .
+    
+    - name: Compile Pokemon Mini ROM
+      run: |
+        docker run --rm \
+          -v $(pwd):/project \
+          -e WINEARCH=win32 \
+          -e WINEPREFIX=/opt/c88-pokemini/wineprefix \
+          pm-compiler make
+    
+    - name: List generated files
+      run: |
+        ls -lh *.min *.sre *.map 2>/dev/null || echo "Archivos generados:"
+        find . -name "*.min" -type f
+    
+    - name: Copy ROM to web directory
+      run: |
+        cp helloworld.min web/game.min
+        ls -lh web/game.min
+    
+    - name: Upload ROM as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: pokemon-mini-rom
+        path: |
+          helloworld.min
+          helloworld.sre
+          helloworld.map
+        if-no-files-found: error
+    
+    - name: Upload web files for GitHub Pages
+      uses: actions/upload-artifact@v4
+      with:
+        name: github-pages
+        path: web/
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          helloworld.min
+          helloworld.sre
+        body: |
+          ## Pokemon Mini ROM Build
+          
+          **Version:** ${{ github.ref_name }}
+          **Commit:** ${{ github.sha }}
+          
+          ### 🎮 Jugar Online
+          **[▶️ Jugar ahora en el navegador](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/)**
+          
+          ### Archivos incluidos:
+          - `helloworld.min` - ROM ejecutable para Pokemon Mini
+          - `helloworld.sre` - Archivo S-record
+          
+          ### Cómo usar:
+          1. **Opción 1 (Recomendado):** Haz clic en el link de arriba para jugar en el navegador
+          2. **Opción 2:** Descarga `helloworld.min` y abre con un emulador Pokemon Mini
+          
+          ### Emuladores recomendados:
+          - [PokeMini](https://sourceforge.net/projects/pokemini/)
+          - [PokeMini Web](https://asterick.github.io/pm/)
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  deploy-pages:
+    needs: build
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    
+    permissions:
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Download web artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: github-pages
+        path: ./web
+    
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+    
+    - name: Upload artifact to Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./web
+    
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+

@@ -1,22 +1,41 @@
-# Archivos de compilación
+# Archivos de compilación (en la raíz)
+/*.min
+/*.hex
+/*.obj
+/*.src
+/*.lst
+/*.map
+/*.sre
+/*.abs
+/*.out
+
+# Build directory
 build/
+
+# Archivos generados por compilación (NO subir al repo)
 *.min
 *.hex
 *.obj
 *.src
 *.lst
 *.map
+*.sre
+*.abs
+*.out
 
 # Archivos de sistema
 .DS_Store
 Thumbs.db
+*~
 
 # IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
-*.map
-*.sre
+# Docker
+.dockerignore
+
+# Logs
+*.log
