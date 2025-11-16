@@ -15,7 +15,7 @@
         <div class="container"></div>
         <script>
             function loadedWasm() {
-                fetch('./game.min').then(response => response.arrayBuffer()).then((game)=> {
+                fetch(`./game.min?t=${Date.now()}`).then(response => response.arrayBuffer()).then((game)=> {
                     window.systemContext.system.load(game);
                     window.systemContext.system.reset();
                 });
